@@ -9,6 +9,7 @@ export const meta: MetaFunction = () => {
 
 import { ActionFunction } from "@remix-run/node";
 import { Form, Link, useActionData, useNavigation } from "@remix-run/react";
+import { useEffect, useRef } from "react";
 
 export const action: ActionFunction = async ({ request }) => {
   const formData = await request.formData();
@@ -41,34 +42,56 @@ export default function Newsletter() {
       ? "error"
       : "idle";
 
+  const inputRef = useRef<HTMLInputElement>(null);
+  const successref = useRef<HTMLHeadingElement>(null);
+  const mounted = useRef<boolean>(false);
+
+  useEffect(() => {
+    if (state === "error") {
+      inputRef.current?.focus();
+    }
+
+    if (state === "idle" && mounted.current) {
+      inputRef.current?.select();
+    }
+
+    if (state === "success" && mounted.current) {
+      inputRef.current?.focus();
+    }
+
+    mounted.current = true;
+  }, [state]);
+
   return (
     <main>
       <Form method="post" aria-hidden={state === "success"}>
         <div>
           <h2>Subscribe!</h2>
           <p>Dont miss any of the action</p>
-          <fieldset>
+          <fieldset disabled={state === "submitting"}>
             <input
+              aria-label="Email address"
+              aria-describedby="error-message"
+              ref={inputRef}
               type="email"
               name="email"
               placeholder="you@example.com"
-              className="rounded-lg p-2 m-2"
             />
-            <button type="submit">Subscribe</button>
+            <button type="submit">
+              {state === "submitting" ? "Subscribing..." : "Subscribe"}
+            </button>
           </fieldset>
 
-          <p>
-            {(actionData as { error?: string })?.error ? (
-              (actionData as { message?: string })?.message
-            ) : (
-              <>&nbsp;</>
-            )}
+          <p id="error-message">
+            {state === "error" ? actionData?.message : <>&nbsp;</>}
           </p>
         </div>
       </Form>
 
       <div aria-hidden={state !== "success"}>
-        <h2>You are now subscribed to the newsletter!</h2>
+        <h2 ref={successref} tabIndex={-1}>
+          You are now subscribed to the newsletter!
+        </h2>
         <p>Please check your email to confirm your subscribtion</p>
         <Link to=".">Start over</Link>
       </div>
