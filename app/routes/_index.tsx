@@ -31,10 +31,14 @@ export const action: ActionFunction = async ({ request }) => {
 };
 
 export default function Newsletter() {
-  const actionData = useActionData();
-  const transition = useNavigation();
+  const actionData = useActionData() as {
+    subscription?: unknown;
+    error?: unknown;
+    message?: string;
+  };
+  const transition = useNavigation() as { submission?: { state: string } };
   const state: "idle" | "success" | "error" | "submitting" =
-    transition.submission
+    transition.submission?.state ?? "idle"
       ? "submitting"
       : actionData?.subscription
       ? "success"
@@ -64,7 +68,7 @@ export default function Newsletter() {
 
   return (
     <main>
-      <Form method="post" aria-hidden={state === "success"}>
+      <Form replace method="post" aria-hidden={state === "success"}>
         <div>
           <h2>Subscribe!</h2>
           <p>Dont miss any of the action</p>
